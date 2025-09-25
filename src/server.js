@@ -1,18 +1,17 @@
-import express from "express";
-import dotenv from "dotenv";
+import express from 'express'
+import dotenv from 'dotenv'
 
-dotenv.config();
-const port = process.env.PORT;
+dotenv.config()
+const port = process.env.PORT
 
-const app = express();
+const app = express()
 
-const dataBase = "../database/notes.json";
+const dataBase = '../database/notes.json'
 
-
-app.get("/", (req, res) => {
-  res.send(`"message":"Server is up and running"`);
-});
+app.get('/', (req, res) => {
+  res.send(`"message":"Server is up and running"`)
+})
 
 app.listen(port, () => {
-  console.log(`"message": "Server is up and running on ${port}"`);
-});
+  console.log(`"message": "Server is up and running on ${port}"`)
+})
