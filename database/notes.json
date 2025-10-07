@@ -1,1 +1,25 @@
-[]
+[
+  {
+    "id": "c8f8933c-3daf-4e35-b1c6-7a04e64fbb7b",
+    "title": "eat",
+    "tags": [
+      "food",
+      "diet"
+    ],
+    "priority": "low",
+    "createdAt": "2025-10-07T13:15:11.842Z",
+    "updatedAt": "2025-10-07T13:22:58.243Z",
+    "isCompleted": false
+  },
+  {
+    "id": "1793b36a-bdf6-4905-bbf5-34b28e83d31e",
+    "title": "dance",
+    "tags": [
+      "health"
+    ],
+    "priority": "high",
+    "createdAt": "2025-10-07T13:15:19.563Z",
+    "updatedAt": "2025-10-07T13:19:34.892Z",
+    "isCompleted": false
+  }
+]

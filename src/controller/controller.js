@@ -14,12 +14,49 @@ function writeTasks(tasks) {
 
 export async function getTasks(req, res, next) {
   try {
-    const tasks = readTasks()
+    const { search, status = 'all', priority } = req.query
+    const data = await readTasks()
+    let tasks = data
+
+    if (search && typeof search === 'string') {
+      const searchText = search.toLowerCase()
+
+      tasks = tasks.filter((task) => {
+        return (
+          task.title?.toLowerCase().includes(searchText) ||
+          task.priority?.toLowerCase().includes(searchText) ||
+          task.tags?.some((tag) => tag.toLowerCase().includes(searchText))
+        )
+      })
+    }
+
+    if (status === 'completed') {
+      tasks = tasks.filter((task) => task.isCompleted === true)
+    } else if (status === 'pending') {
+      tasks = tasks.filter((task) => task.isCompleted === false)
+    }
+
+    if (priority && typeof priority === 'string') {
+      tasks = tasks.filter(
+        (task) => task.isImportant?.toLowerCase() === priority.toLowerCase()
+      )
+    }
+
+    tasks.sort((a, b) => {
+      return new Date(b.updatedAt) - new Date(a.updatedAt)
+    })
 
     res.json(tasks)
-  } catch (e) {
-    next(e)
+  } catch (err) {
+    next(err)
   }
+  //   try {
+  //     const tasks = readTasks()
+
+  //     res.json(tasks)
+  //   } catch (e) {
+  //     next(e)
+  //   }
 }
 
 export async function addTask(req, res, next) {
