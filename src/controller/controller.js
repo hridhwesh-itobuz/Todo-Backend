@@ -36,12 +36,22 @@ export async function getTasks(req, res, next) {
       tasks = tasks.filter((task) => task.isCompleted === false)
     }
 
-    if (priority && typeof priority === 'string') {
+    if (priority && priority != 'all' && typeof priority === 'string') {
       tasks = tasks.filter(
-        (task) => task.isImportant?.toLowerCase() === priority.toLowerCase()
+        (task) => task.priority?.toLowerCase() === priority.toLowerCase()
+      )
+    } else if (priority == 'all') {
+      tasks = tasks.filter(
+        (task) =>
+          task.priority === 'low' ||
+          task.priority === 'medium' ||
+          task.priority === 'high'
       )
     }
 
+    if (tasks == []) {
+      throw new Error('Task list empty.')
+    }
     tasks.sort((a, b) => {
       return new Date(b.updatedAt) - new Date(a.updatedAt)
     })
@@ -50,13 +60,6 @@ export async function getTasks(req, res, next) {
   } catch (err) {
     next(err)
   }
-  //   try {
-  //     const tasks = readTasks()
-
-  //     res.json(tasks)
-  //   } catch (e) {
-  //     next(e)
-  //   }
 }
 
 export async function addTask(req, res, next) {
