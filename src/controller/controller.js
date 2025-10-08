@@ -1,5 +1,7 @@
 import fs from 'fs'
 import { v4 as uuidv4 } from 'uuid'
+import { validateRequest } from '../../validation/validator.js'
+import { taskCreateSchema, taskUpdateSchema } from '../../schema/schema.js'
 
 const DATA_FILE = './database/notes.json'
 
@@ -63,6 +65,9 @@ export async function getTasks(req, res, next) {
 }
 
 export async function addTask(req, res, next) {
+  const validatedData = await validateRequest(taskCreateSchema, req.body, next)
+  if (!validatedData) return
+
   try {
     const { title, priority, tags } = req.body
 
@@ -124,29 +129,29 @@ export async function deleteTask(req, res, next) {
 }
 
 export async function updateTask(req, res, next) {
+  const { id } = req.params
+  const validatedData = await validateRequest(taskUpdateSchema, req.body, next)
+  if (!validatedData) return
   try {
-    const { id } = req.params
-    const { title, isCompleted, priority, tags } = req.body
-
     const tasks = readTasks()
     const task = tasks.find((t) => t.id === id)
     if (!task) {
       res.status(400)
       throw new Error('Task not found')
     }
+    if (validatedData.title) {
+      task.title = validatedData.title
+    }
+    if (validatedData.tags) {
+      task.tags = validatedData.tags
+    }
+    if (validatedData.priority) {
+      task.isImportant = validatedData.isImportant
+    }
+    if (typeof validatedData.isCompleted === 'boolean') {
+      task.isCompleted = validatedData.isCompleted
+    }
 
-    if (title && typeof title === 'string') {
-      task.title = title
-    }
-    if (priority && typeof priority === 'string') {
-      task.priority = priority
-    }
-    if (isCompleted !== undefined && typeof isCompleted === 'boolean') {
-      task.isCompleted = isCompleted
-    }
-    if (tags && Array.isArray(tags)) {
-      task.tags = tags
-    }
     task.updatedAt = new Date().toISOString()
 
     writeTasks(tasks)
