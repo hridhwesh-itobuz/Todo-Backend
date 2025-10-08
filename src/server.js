@@ -2,9 +2,12 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import router from './router/routes.js'
+import connectDB from '../database/mongo.js'
 
 dotenv.config()
 const port = process.env.PORT
+
+connectDB()
 
 const app = express()
 app.use(express.json())

@@ -1,7 +1,8 @@
 import fs from 'fs'
-import { v4 as uuidv4 } from 'uuid'
+//import { v4 as uuidv4 } from 'uuid'
 import { validateRequest } from '../../validation/validator.js'
 import { taskCreateSchema, taskUpdateSchema } from '../../schema/schema.js'
+import Task from '../../schema/mongoschema.js'
 
 const DATA_FILE = './database/notes.json'
 
@@ -14,51 +15,43 @@ function writeTasks(tasks) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
 }
 
-export async function getTasks(req, res, next) {
+export const getTasks = async (req, res, next) => {
   try {
-    const { search, status = 'all', priority } = req.query
-    const data = await readTasks()
-    let tasks = data
+    const { search, status, priority } = req.query
+
+    const filter = {}
 
     if (search && typeof search === 'string') {
-      const searchText = search.toLowerCase()
+      const regex = new RegExp(search, 'i')
 
-      tasks = tasks.filter((task) => {
-        return (
-          task.title?.toLowerCase().includes(searchText) ||
-          task.priority?.toLowerCase().includes(searchText) ||
-          task.tags?.some((tag) => tag.toLowerCase().includes(searchText))
-        )
-      })
+      filter.$or = [
+        { title: { $regex: regex } },
+        { priority: { $regex: regex } },
+        { tags: { $regex: regex } },
+      ]
     }
 
     if (status === 'completed') {
-      tasks = tasks.filter((task) => task.isCompleted === true)
+      filter.isCompleted = true
     } else if (status === 'pending') {
-      tasks = tasks.filter((task) => task.isCompleted === false)
+      filter.isCompleted = false
     }
 
-    if (priority && priority != 'all' && typeof priority === 'string') {
-      tasks = tasks.filter(
-        (task) => task.priority?.toLowerCase() === priority.toLowerCase()
-      )
-    } else if (priority == 'all') {
-      tasks = tasks.filter(
-        (task) =>
-          task.priority === 'low' ||
-          task.priority === 'medium' ||
-          task.priority === 'high'
-      )
+    if (priority && priority !== 'all') {
+      filter.priority = priority.toLowerCase()
     }
 
-    if (tasks == []) {
-      throw new Error('Task list empty.')
+    if (priority === 'all') {
+      filter.priority = { $in: ['low', 'medium', 'high'] }
     }
-    tasks.sort((a, b) => {
-      return new Date(b.updatedAt) - new Date(a.updatedAt)
-    })
 
-    res.json(tasks)
+    const tasks = await Task.find(filter).sort({ updatedAt: -1 })
+
+    if (tasks.length === 0) {
+      return res.status(200).json([])
+    }
+
+    res.status(200).json(tasks)
   } catch (err) {
     next(err)
   }
@@ -69,36 +62,24 @@ export async function addTask(req, res, next) {
   if (!validatedData) return
 
   try {
-    const { title, priority, tags } = req.body
-
+    //const { title, priority, tags } = req.body
+    const { title } = req.body
     if (!title) {
       res.status(400)
       throw new Error('Title is Required!')
     }
 
-    const newTask = {
-      id: uuidv4(),
-      title,
-      tags,
-      priority: priority || 'Low',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isCompleted: false,
-    }
-
-    const tasks = readTasks()
-    tasks.push(newTask)
-    writeTasks(tasks)
-
+    const newTask = await Task.create(req.body)
     res.status(201).json(newTask)
   } catch (e) {
+    res.status(500).json({ error: e.message })
     next(e)
   }
 }
 
 export async function deleteAllTasks(req, res, next) {
   try {
-    writeTasks([])
+    await Task.deleteMany({})
 
     res.json({ message: 'All tasks cleared' })
   } catch (e) {
@@ -109,20 +90,15 @@ export async function deleteAllTasks(req, res, next) {
 export async function deleteTask(req, res, next) {
   try {
     const { id } = req.params
-    const tasks = readTasks()
+    console.log(id)
+    const deletedTask = await Task.findByIdAndDelete(id)
 
-    const indexToRemove = tasks.findIndex((task) => task.id === id)
-    console.log('Deleted at: ', indexToRemove)
-
-    if (indexToRemove !== -1) {
-      tasks.splice(indexToRemove, 1)
-
-      writeTasks(tasks)
-    } else {
+    if (!deletedTask) {
       res.status(400)
-      throw new Error("Task couldn't be found")
+      throw new Error('Task not found')
     }
-    res.json({ message: 'Task deleted' })
+
+    res.status(200).send({ success: true, data: deletedTask })
   } catch (e) {
     next(e)
   }
