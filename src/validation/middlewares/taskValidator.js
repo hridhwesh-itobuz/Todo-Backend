@@ -1,6 +1,7 @@
 import {
   taskCreateSchema,
   taskUpdateSchema,
+  fetchTasksSchema,
 } from '../schema/validationSchema.js';
 
 export default class ToDoValidations {
@@ -17,9 +18,11 @@ export default class ToDoValidations {
         err.status = 400;
         next(new Error(err.errors.join(', ')));
       }
+
       next(err);
     }
   };
+
   validateUpdate = async (req, res, next) => {
     try {
       await taskUpdateSchema.validate(req.body, {
@@ -33,6 +36,25 @@ export default class ToDoValidations {
         err.status = 400;
         next(new Error(err.errors.join(', ')));
       }
+
+      next(err);
+    }
+  };
+
+  validateFetch = async (req, res, next) => {
+    try {
+      await fetchTasksSchema.validate(req.body, {
+        abortEarly: false, // return all validation errors
+        stripUnknown: true, // remove unexpected fields
+      });
+
+      next();
+    } catch (err) {
+      if (err.name === 'ValidationError') {
+        err.status = 400;
+        next(new Error(err.errors.join(', ')));
+      }
+
       next(err);
     }
   };

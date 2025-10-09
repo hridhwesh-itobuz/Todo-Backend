@@ -19,3 +19,10 @@ export const taskUpdateSchema = yup.object({
   priority: yup.string(),
   isCompleted: yup.boolean(),
 });
+
+export const fetchTasksSchema = yup.object({
+  title: yup.string().trim(),
+  tags: yup.array().of(yup.string()),
+  priority: yup.string(),
+  isCompleted: yup.boolean(),
+});
