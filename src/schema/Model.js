@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const taskSchema = new mongoose.Schema(
   {
@@ -23,8 +23,8 @@ const taskSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
-)
+);
 
-const Task = mongoose.model('Task', taskSchema)
+const Task = mongoose.model('Task', taskSchema);
 
-export default Task
+export default Task;

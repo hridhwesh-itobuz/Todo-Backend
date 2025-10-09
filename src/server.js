@@ -1,29 +1,29 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import cors from 'cors'
-import router from './router/routes.js'
-import connectDB from './dbConfig/mongo.js'
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import router from './router/routes.js';
+import connectDB from './dbConfig/mongo.js';
 
-dotenv.config()
-const port = process.env.PORT
+dotenv.config();
+const port = process.env.PORT;
 
-connectDB()
+connectDB();
 
-const app = express()
-app.use(express.json())
+const app = express();
+app.use(express.json());
 
-app.use(cors())
+app.use(cors());
 
 const sc = {
   success: true,
   message: `server is up and running ${port}`,
-}
+};
 
 app.get('/', (req, res) => {
-  res.send(sc)
-})
+  res.send(sc);
+});
 
-app.use(router)
+app.use(router);
 
 // eslint-disable-next-line
 app.use((err, req, res, next) => {
@@ -31,15 +31,15 @@ app.use((err, req, res, next) => {
     return res.status(res.statusCode === 200 ? 500 : res.statusCode).send({
       success: false,
       message: err.message,
-    })
+    });
   } catch (error) {
     return res.status(500).send({
       success: false,
       message: error.message,
-    })
+    });
   }
-})
+});
 
 app.listen(port, () => {
-  console.log(`"message": "server is up and running"`)
-})
+  console.log(`"message": "server is up and running"`);
+});
