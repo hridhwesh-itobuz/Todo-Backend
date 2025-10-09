@@ -6,8 +6,11 @@ import {
   deleteTask,
   deleteAllTasks,
 } from '../controller/controller.js'
+import ToDoValidations from '../validation/middlewares/taskValidator.js'
 
 const router = Router()
+
+const validationMiddleware = new ToDoValidations()
 
 router.use((req, res, next) => {
   console.log(`Route middleware: ${req.method} ${req.url}`)
@@ -15,8 +18,8 @@ router.use((req, res, next) => {
 })
 
 router.get('/tasks', getTasks)
-router.post('/tasks', addTask)
-router.put('/tasks/:id', updateTask)
+router.post('/tasks', validationMiddleware.validateCreation, addTask)
+router.put('/tasks/:id', validationMiddleware.validateUpdate, updateTask)
 router.delete('/tasks/:id', deleteTask)
 router.delete('/tasks', deleteAllTasks)
 

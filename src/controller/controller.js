@@ -1,19 +1,4 @@
-import fs from 'fs'
-//import { v4 as uuidv4 } from 'uuid'
-import { validateRequest } from '../../validation/validator.js'
-import { taskCreateSchema, taskUpdateSchema } from '../../schema/schema.js'
-import Task from '../../schema/mongoschema.js'
-
-const DATA_FILE = './database/notes.json'
-
-function readTasks() {
-  if (!fs.existsSync(DATA_FILE)) fs.writeFile(DATA_FILE, '[]')
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'))
-}
-
-function writeTasks(tasks) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
-}
+import Task from '../schema/Model.js'
 
 export const getTasks = async (req, res, next) => {
   try {
@@ -58,9 +43,6 @@ export const getTasks = async (req, res, next) => {
 }
 
 export async function addTask(req, res, next) {
-  const validatedData = await validateRequest(taskCreateSchema, req.body, next)
-  if (!validatedData) return
-
   try {
     //const { title, priority, tags } = req.body
     const { title } = req.body
@@ -105,34 +87,31 @@ export async function deleteTask(req, res, next) {
 }
 
 export async function updateTask(req, res, next) {
-  const { id } = req.params
-  const validatedData = await validateRequest(taskUpdateSchema, req.body, next)
-  if (!validatedData) return
+  const id = req.params.id
+  const { title, tags, priority, isCompleted } = req.body
   try {
-    const tasks = readTasks()
-    const task = tasks.find((t) => t.id === id)
-    if (!task) {
+    console.log('Updating task with id:', id)
+    const newData = { title, tags, priority }
+
+    if (typeof isCompleted === 'boolean') {
+      newData.isCompleted = isCompleted
+    }
+    console.log('New data to update:', newData)
+
+    const result = await Task.findByIdAndUpdate(
+      id,
+      { $set: newData },
+      { new: true }
+    )
+
+    if (!result) {
       res.status(400)
-      throw new Error('Task not found')
-    }
-    if (validatedData.title) {
-      task.title = validatedData.title
-    }
-    if (validatedData.tags) {
-      task.tags = validatedData.tags
-    }
-    if (validatedData.priority) {
-      task.isImportant = validatedData.isImportant
-    }
-    if (typeof validatedData.isCompleted === 'boolean') {
-      task.isCompleted = validatedData.isCompleted
+      throw new Error('Document not found.')
     }
 
-    task.updatedAt = new Date().toISOString()
-
-    writeTasks(tasks)
-    res.json(task)
+    res.status(200).json(result)
   } catch (e) {
+    console.error(e)
     next(e)
   }
 }
