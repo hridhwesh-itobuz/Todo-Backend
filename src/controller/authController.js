@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+//import axios from 'axios';
 import User from '../schema/userModel.js';
 
 dotenv.config();
@@ -8,16 +9,12 @@ dotenv.config();
 export default class AuthenticationController {
   registerUser = async (req, res) => {
     try {
+      res.cookie('title', 'hridhwesh');
       const { username, password } = req.body;
       const hashedPass = await bcrypt.hash(password, 10);
       console.log(username, password, hashedPass);
       const user = new User({ username, password: hashedPass });
       await user.save();
-      // const newUser = await User.create({
-      //   username: username,
-      //   password: hashedPass,
-      // });
-      // console.log(newUser);
       res.status(201).json({ success: true, user });
     } catch (error) {
       res.status(500).json({ success: false, Error: error });
@@ -26,6 +23,8 @@ export default class AuthenticationController {
 
   loginUser = async (req, res, next) => {
     try {
+      //const PORT = process.env.PORT;
+
       const secretKey = process.env.JWT_SECRET_KEY;
       const { username, password } = req.body;
       //console.log(req.body);
@@ -46,6 +45,12 @@ export default class AuthenticationController {
       const token = jwt.sign({ userId: user._id }, secretKey, {
         expiresIn: '1h',
       });
+      // const axiosInstance = axios.create({
+      //   baseURL: `https://localhost:${PORT}`,
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      // });
 
       delete user._doc.password;
 
